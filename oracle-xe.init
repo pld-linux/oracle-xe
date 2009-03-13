@@ -35,7 +35,6 @@ start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/oracle-xe ]; then
 		msg_starting 'oracle-xe listener'
-		daemon /home/users/z/rpm/BUILD/oracle-xe-10.2.0.1/etc/init.d
 		daemon --user oracle $ORACLE_HOME/bin/lsnrctl start > /dev/null 2>&1
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] || return 1
