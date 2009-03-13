@@ -1,3 +1,5 @@
+# TODO:
+# - read the license. Can we redistribute it?
 
 %define         _enable_debug_packages                  0
 %define         no_install_post_strip                   1
@@ -5,7 +7,12 @@
 
 %define		oracle_rel 1.0
 %define		oracle_ver 10.2.0
-%define		oracle_home /usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}
+%define		oracle_home /usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}/server
+
+%define		mvln() \
+mv $RPM_BUILD_ROOT%{oracle_home}/%{1} $RPM_BUILD_ROOT%{2} \
+ln -s %{2}/%{1} $RPM_BUILD_ROOT%{oracle_home}/%{1}
+
 Summary:	Oracle XE
 Summary(pl.UTF-8):	Wyrocznia XE
 Name:		oracle-xe
@@ -51,22 +58,38 @@ Wyrocznia XE.
 
 rpm2cpio %{SOURCE0} | cpio -dimu
 
-cp %{SOURCE2} .
-sed -i 's#^ORACLE_HOME=$#ORACLE_HOME=%{oracle_home}#'
+sed 's#^ORACLE_HOME=$#ORACLE_HOME=%{oracle_home}#' < %{SOURCE2} > oracle-xe.sysconfig
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/etc/{init.d,sysconfig}
+install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig}
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/oracle-xe
-install oracle.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/oracle-xe
+install oracle-xe.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/oracle-xe
 
 install -d $RPM_BUILD_ROOT%{oracle_home}
-cp -a usr/lib/oracle/xe/app/oracle/product/%{oracle_ver} $RPM_BUILD_ROOT%{oracle_home} 
+cp -a usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}/server/* $RPM_BUILD_ROOT%{oracle_home} 
 
-mv $RPM_BUILD_ROOT%{oracle_home}/network/admin $RPM_BUILD_ROOT%{sysconfdir}/oracle-xe
-ln -s $RPM_BUILD_ROOT%{sysconfdir}/oracle-xe $RPM_BUILD_ROOT%{oracle_home}/network/admin
+mv $RPM_BUILD_ROOT%{oracle_home}/dbs/init{,XE}.ora
 
-mv $RPM_BUILD_ROOT/server/dbs/init{,XE}.ora
+install -d $RPM_BUILD_ROOT/var/{lib,log}/oracle
+
+%{mvln dbs /var/lib/oracle}
+#%%{mvln log /var/log/oracle}
+%{mvln rdbms/log /var/log/oracle}
+%{mvln rdbms /var/lib/oracle}
+%{mvln network/admin /var/lib/oracle}
+ln -s /var/lib/oracle/admin $RPM_BUILD_ROOT/etc/oracle-xe
+
+# ln -s /var/lib/oracle/dbs $RPM_BUILD_ROOT%{oracle_home}/dbs
+# mv $RPM_BUILD_ROOT%{oracle_home}/log $RPM_BUILD_ROOT/var/log/oracle/log
+# ln -s /var/log/oracle/log $RPM_BUILD_ROOT%{oracle_home}/log
+# mv $RPM_BUILD_ROOT%{oracle_home}/rdbms/log $RPM_BUILD_ROOT/var/log/oracle/rdbms
+# ln -s /var/log/oracle/rdbms $RPM_BUILD_ROOT%{oracle_home}/rdbms/log
+# mv $RPM_BUILD_ROOT%{oracle_home}/rdbms $RPM_BUILD_ROOT/var/lib/oracle
+# ln -s /var/lib/oracle/rdbms $RPM_BUILD_ROOT%{oracle_home}/rdbms
+# mv $RPM_BUILD_ROOT%{oracle_home}/rdbms $RPM_BUILD_ROOT/var/lib/oracle
+# ln -s /var/lib/oracle/rdbms $RPM_BUILD_ROOT%{oracle_home}/rdbms
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -90,8 +113,11 @@ fi
 %files
 %defattr(644,root,root,755)
 %{oracle_home}
-%dir %{sysconfdir}/oracle-xe
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) listener.ora
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) tnsnames.ora
+%dir %{_sysconfdir}/oracle-xe
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/rc.d/init.d/oracle-xe
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/oracle-xe
+%defattr(640,oracle,dba,755)
+/var/lib/oracle
+/var/log/oracle
 
 %doc usr/share/doc/oracle_xe/*
