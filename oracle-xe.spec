@@ -15,6 +15,8 @@ License:	Proprietary (not distributable)
 Group:		Applications
 Source0:	%{name}-%{version}-%{oracle_rel}.i386.rpm
 # NoSource0-md5:	707641df1e51320607ba9b0a7b19fb3d
+Source1:	%{name}.init
+Source2:	%{name}.sysconfig
 NoSource:       0
 URL:		-
 %if %{with initscript}
@@ -49,11 +51,22 @@ Wyrocznia XE.
 
 rpm2cpio %{SOURCE0} | cpio -dimu
 
+cp %{SOURCE2} .
+sed -i 's#^ORACLE_HOME=$#ORACLE_HOME=%{oracle_home}#'
+
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{oracle_home}
+install -d $RPM_BUILD_ROOT/etc/{init.d,sysconfig}
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/oracle-xe
+install oracle.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/oracle-xe
 
+install -d $RPM_BUILD_ROOT%{oracle_home}
 cp -a usr/lib/oracle/xe/app/oracle/product/%{oracle_ver} $RPM_BUILD_ROOT%{oracle_home} 
+
+mv $RPM_BUILD_ROOT%{oracle_home}/network/admin $RPM_BUILD_ROOT%{sysconfdir}/oracle-xe
+ln -s $RPM_BUILD_ROOT%{sysconfdir}/oracle-xe $RPM_BUILD_ROOT%{oracle_home}/network/admin
+
+mv $RPM_BUILD_ROOT/server/dbs/init{,XE}.ora
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -77,4 +90,8 @@ fi
 %files
 %defattr(644,root,root,755)
 %{oracle_home}
+%dir %{sysconfdir}/oracle-xe
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) listener.ora
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) tnsnames.ora
+
 %doc usr/share/doc/oracle_xe/*
