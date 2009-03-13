@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# oracle-xe	Oracle XE database
+#
+# chkconfig:	345 80 20
+#
+# description:	Oracle XE database
+#
+# processname:	oracle-xe
+# config:	/etc/sysconfig/oracle-xe
+# pidfile:	/var/run/pid/oracle-xe
+#
+# $Id$
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Get service config - may override defaults
+[ -f /etc/sysconfig/oracle-xe ] && . /etc/sysconfig/oracle-xe
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down oracle-xe
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+start() {
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/oracle-xe ]; then
+		msg_starting 'oracle-xe listener'
+		daemon /home/users/z/rpm/BUILD/oracle-xe-10.2.0.1/etc/init.d
+		daemon --user oracle $ORACLE_HOME/bin/lsnrctl start > /dev/null 2>&1
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] || return 1
+
+		msg_starting 'oracle-xe database'
+		daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/startdb.sql > /dev/null 2>&1
+		RETVAL=$?
+		if [ $RETVAL -eq 0 ]; then
+			touch /var/lock/subsys/oracle-xe
+		else
+			msg_stopping 'oracle-xe listener'
+			daemon --user oracle $ORACLE_HOME/bin/lsnrctl stop > /dev/null 2>&1
+		fi
+	else
+		msg_already_running oracle-xe
+	fi
+}
+
+stop() {
+	if [ -f /var/lock/subsys/oracle-xe ]; then
+		# Stop daemons.
+		msg_stopping 'oracle-xe database'
+		daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/stopdb.sql > /dev/null 2>&1
+		msg_stopping 'oracle-xe listener'
+		daemon --user oracle $ORACLE_HOME/bin/lsnrctl stop > /dev/null 2>&1
+		rm -f /var/lock/subsys/oracle-xe
+	else
+		msg_not_running oracle-xe
+	fi
+}
+
+condrestart() {
+	if [ -f /var/lock/subsys/oracle-xe ]; then
+		stop
+		start
+	else
+		msg_not_running oracle-xe
+		RETVAL=$1
+	fi
+}
+
+checkstatus() {
+	if [ -f /var/lock/subsys/oracle-xe ]; then
+		# Stop daemons.
+		show 'Checking if oracle-xe is alive'
+		daemon --user oracle $ORACLE_HOME/bin/lsnrctl status > /dev/null 2>&1
+		return $1
+	else
+		msg_not_running oracle-xe
+		return 1
+	fi
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  try-restart)
+	condrestart 0
+	;;
+  force-reload)
+	condrestart 7
+	;;
+  status)
+  	echo Not implemented yet.
+	checkstatus
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|try-restart|reload|force-reload|status}"
+	exit 3
+esac
+
+exit $RETVAL
