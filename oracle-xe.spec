@@ -88,11 +88,17 @@ if [ "$1" = "0" ]; then
 fi
 
 %postun
+if [ "$1" = "0" ]; then
+	%userremove tomcat
+	%groupremove tomcat
+fi
 
 %files
 %defattr(644,root,root,755)
 %{oracle_home}
 %dir %{_sysconfdir}/oracle-xe
+%exclude %{oracle_home}/bin/*
+%attr(755,root,root) %{oracle_home}/bin/*
 %attr(754,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/rc.d/init.d/oracle-xe
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/oracle-xe
 %attr(755,root,root) %{_datadir}/oracle/scripts
