@@ -18,8 +18,18 @@
 # Get network config
 . /etc/sysconfig/network
 
+# Set default options
+ORACLE_OWNER=oracle
+ORACLE_SID=XE
+
 # Get service config - may override defaults
 [ -f /etc/sysconfig/oracle-xe ] && . /etc/sysconfig/oracle-xe
+
+export ORACLE_OWNER
+export ORACLE_SID
+export ORACLE_HOME
+
+export LANG=C
 
 # Check that networking is up.
 if is_yes "${NETWORKING}"; then
