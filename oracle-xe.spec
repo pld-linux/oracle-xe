@@ -62,7 +62,9 @@ install -d $RPM_BUILD_ROOT/var/{lib,log}/oracle
 
 %{mvln dbs /var/lib/oracle}
 #%%{mvln log /var/log/oracle}
-%{mvln rdbms/log /var/log/oracle}
+%{mvln rdbms/log /var/log/oracle/rdbms}
+%{mvln network/log /var/log/oracle/network}
+%{mvln config/log /var/log/oracle/config}
 %{mvln rdbms /var/lib/oracle}
 %{mvln network/admin /var/lib/oracle}
 ln -s /var/lib/oracle/admin $RPM_BUILD_ROOT%{_sysconfdir}/oracle-xe
@@ -74,8 +76,8 @@ install %{SOURCE3} $RPM_BUILD_ROOT%{_datadir}/oracle/scripts/sgapga.awk
 rm -rf $RPM_BUILD_ROOT
 
 %pre
-%groupadd -g 234 -r -f dba
-%useradd -u 234 -r -d /usr/lib/oracle/xe -s /bin/false -c "Oracle" -g dba oracle
+%groupadd -g 236 -r -f dba
+%useradd -u 236 -r -d /usr/lib/oracle/xe -s /bin/false -c "Oracle" -g dba oracle
 
 %post
 /sbin/chkconfig --add %{name}
