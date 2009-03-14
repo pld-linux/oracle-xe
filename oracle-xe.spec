@@ -67,8 +67,8 @@ install -d $RPM_BUILD_ROOT/var/{lib,log}/oracle
 %{mvln network/admin /var/lib/oracle}
 ln -s /var/lib/oracle/admin $RPM_BUILD_ROOT%{_sysconfdir}/oracle-xe
 
-install -d $RPM_BUID_ROOT%{_datadir}/oracle/scripts
-isntall %{SOURCE3} $RPM_BUID_ROOT%{_datadir}/oracle/scripts/sgapga.awk
+install -d $RPM_BUILD_ROOT%{_datadir}/oracle/scripts
+install %{SOURCE3} $RPM_BUILD_ROOT%{_datadir}/oracle/scripts/sgapga.awk
 
 %clean
 rm -rf $RPM_BUILD_ROOT
