@@ -58,12 +58,13 @@ cp -a usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}/server/* $RPM_BUILD_ROO
 
 mv $RPM_BUILD_ROOT%{oracle_home}/dbs/init{,XE}.ora
 
-install -d $RPM_BUILD_ROOT/var/{lib,log}/oracle
+install -d $RPM_BUILD_ROOT/var/lib/oracle/network/admin
+install -d $RPM_BUILD_ROOT/var/log/oracle
 
 %{mvln dbs /var/lib/oracle}
 #%%{mvln log /var/log/oracle}
-%{mvln rdbms/log /var/log/oracle/rdbms}
-%{mvln network/log /var/log/oracle/network}
+%{mvln rdbms/log /var/log/oracle}
+%{mvln network/log /var/log/oracle}
 %{mvln config/log /var/log/oracle/config}
 %{mvln rdbms /var/lib/oracle}
 %{mvln network/admin /var/lib/oracle}
@@ -91,15 +92,14 @@ fi
 
 %postun
 if [ "$1" = "0" ]; then
-	%userremove tomcat
-	%groupremove tomcat
+	%userremove oracle
+	%groupremove dba
 fi
 
 %files
 %defattr(644,root,root,755)
 %{oracle_home}
 %dir %{_sysconfdir}/oracle-xe
-%exclude %{oracle_home}/bin/*
 %attr(755,root,root) %{oracle_home}/bin/*
 %attr(754,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/rc.d/init.d/oracle-xe
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/oracle-xe
