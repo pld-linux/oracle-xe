@@ -31,9 +31,47 @@ else
 	exit 0
 fi
 
+confkernel() {
+  $(awk '
+  function min(a, b) {return ((a < b)?a:b)}
+  function max(a, b) {return ((a > b)?a:b)}
+  
+  BEGIN {
+    getline < "/proc/sys/kernel/sem"
+    printf ("eval semmsl=%i\n", max(250, $1));
+    printf ("eval semmns=%i\n", max(32000, $2));
+    printf ("eval semopm=%i\n", max(100, $3));
+    printf ("eval semmni=%i\n", max(128, $4));
+
+    getline < "/proc/sys/kernel/shmmax"
+    printf ("eval shmmax=%i\n", max(536870912, $1));
+
+    getline < "/proc/sys/kernel/shmmni"
+    printf ("eval shmmni=%i\n", max(4096, $1));
+
+    getline < "/proc/sys/kernel/shmall"
+    printf ("eval shmall=%i\n", max(2097152, $1));
+    
+    getline < "/proc/sys/fs/file-max"
+    printf ("eval filemax=%i\n", max(65536, $1));
+
+    getline < "/proc/sys/net/ipv4/ip_local_port_range"
+    printf ("eval ip_local_port_range_lb=%i\n", max(1024, $1));
+    printf ("eval ip_local_port_range_ub=%i\n", min(65000 $2));
+  }')
+
+  /sbin/sysctl -w kernel.sem="$semmsl $semmns $semopm $semmni"
+  /sbin/sysctl -w kernel.shmmax="$shmmax"
+  /sbin/sysctl -w kernel.shmmni="$shmmni"
+  /sbin/sysctl -w kernel.shmall="$shmall"
+  /sbin/sysctl -w fs.file-max="$filemax"
+  /sbin/sysctl -w net.ipv4.ip_local_port_range="$ip_local_port_range_lb $ip_local_port_range_ub"
+}
+
 start() {
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/oracle-xe ]; then
+		confkernel
 		msg_starting 'oracle-xe listener'
 		daemon --user oracle $ORACLE_HOME/bin/lsnrctl start > /dev/null 2>&1
 		RETVAL=$?
@@ -88,6 +126,15 @@ checkstatus() {
 	fi
 }
 
+initialize() {
+  $(/usr/share/oracle/scripts/sgapga.awk /proc/meminfo)
+  /bin/sed -i "s/%sga_target%/$sga/g" $ORACLE_HOME/config/scripts/init.ora
+  /bin/sed -i "s/%pga_aggregate_target%/$pga/g" $ORACLE_HOME/config/scripts/init.ora
+  /bin/sed -i "s/%sga_target%/$sga/g" $ORACLE_HOME/config/scripts/initXETemp.ora
+  /bin/sed -i "s/%pga_aggregate_target%/$pga/g" $ORACLE_HOME/config/scripts/initXETemp.ora
+}
+
+
 RETVAL=0
 # See how we were called.
 case "$1" in
@@ -111,8 +158,11 @@ case "$1" in
   	echo Not implemented yet.
 	checkstatus
 	;;
+  init)
+  	initialize
+	;;
   *)
-	msg_usage "$0 {start|stop|restart|try-restart|reload|force-reload|status}"
+	msg_usage "$0 {start|stop|restart|try-restart|force-reload|status|init}"
 	exit 3
 esac
 
