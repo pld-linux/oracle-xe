@@ -83,18 +83,18 @@ start() {
 	if [ ! -f /var/lock/subsys/oracle-xe ]; then
 		confkernel
 		msg_starting 'oracle-xe listener'
-		daemon --user oracle $ORACLE_HOME/bin/lsnrctl start > /dev/null 2>&1
+		daemon --user oracle $ORACLE_HOME/bin/lsnrctl start
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] || return 1
 
 		msg_starting 'oracle-xe database'
-		daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/startdb.sql > /dev/null 2>&1
+		daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/startdb.sql
 		RETVAL=$?
 		if [ $RETVAL -eq 0 ]; then
 			touch /var/lock/subsys/oracle-xe
 		else
 			msg_stopping 'oracle-xe listener'
-			daemon --user oracle $ORACLE_HOME/bin/lsnrctl stop > /dev/null 2>&1
+			daemon --user oracle $ORACLE_HOME/bin/lsnrctl stop
 		fi
 	else
 		msg_already_running oracle-xe
@@ -105,9 +105,9 @@ stop() {
 	if [ -f /var/lock/subsys/oracle-xe ]; then
 		# Stop daemons.
 		msg_stopping 'oracle-xe database'
-		daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/stopdb.sql > /dev/null 2>&1
+		daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/stopdb.sql
 		msg_stopping 'oracle-xe listener'
-		daemon --user oracle $ORACLE_HOME/bin/lsnrctl stop > /dev/null 2>&1
+		daemon --user oracle $ORACLE_HOME/bin/lsnrctl stop
 		rm -f /var/lock/subsys/oracle-xe
 	else
 		msg_not_running oracle-xe
@@ -128,7 +128,7 @@ checkstatus() {
 	if [ -f /var/lock/subsys/oracle-xe ]; then
 		# Stop daemons.
 		show 'Checking if oracle-xe is alive'
-		daemon --user oracle $ORACLE_HOME/bin/lsnrctl status > /dev/null 2>&1
+		daemon --user oracle $ORACLE_HOME/bin/lsnrctl status
 		return $1
 	else
 		msg_not_running oracle-xe
