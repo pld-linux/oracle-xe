@@ -55,8 +55,11 @@ mv $RPM_BUILD_ROOT%{oracle_home}/dbs/init{,XE}.ora
 install -d $RPM_BUILD_ROOT/var/lib/oracle/network/admin
 install -d $RPM_BUILD_ROOT/var/log/oracle
 
+# move directories that needs to be writable out of /usr, and create symlinks
+# in their original paths
 %define	mvln() \
-mv $RPM_BUILD_ROOT%{oracle_home}/%{1} $RPM_BUILD_ROOT%{2} \
+install -d $(dirname $RPM_BUILD_ROOT%{2}/%{1}) \
+mv $RPM_BUILD_ROOT%{oracle_home}/%{1} $RPM_BUILD_ROOT%{2}/%{1} \
 ln -s %{2}/%{1} $RPM_BUILD_ROOT%{oracle_home}/%{1}
 
 %{mvln dbs /var/lib/oracle}
@@ -105,5 +108,6 @@ fi
 %attr(755,root,root) %{_datadir}/oracle/scripts
 %dir /var/lib/oracle
 %dir /var/log/oracle
-%attr(640,oracle,dba) /var/lib/oracle/*
-%attr(640,oracle,dba) /var/log/oracle/*
+# XXX Directories should be 750, but files 640.
+%attr(750,oracle,dba) /var/lib/oracle/*
+%attr(750,oracle,dba) /var/log/oracle/*
