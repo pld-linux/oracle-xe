@@ -1,5 +1,6 @@
 # TODO:
 # - read the license. Can we redistribute it?
+# - x11 .desktop files
 
 %define	oracle_rel	1.0
 %define	oracle_ver	10.2.0
@@ -43,12 +44,16 @@ rpm2cpio %{SOURCE0} | cpio -dimu
 sed -e 's#^ORACLE_HOME=$#ORACLE_HOME=%{oracle_home}#' < %{SOURCE2} > oracle-xe.sysconfig
 
 mv usr/share/doc/oracle_xe doc
+mv usr/share/man/man1 man
+gzip -d man/*.gz
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig}
+install -d $RPM_BUILD_ROOT{/etc/{rc.d/init.d,sysconfig},%{_mandir}/man1}
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/oracle-xe
 install oracle-xe.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/oracle-xe
+
+cp -a man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
 install -d $RPM_BUILD_ROOT%{oracle_home}
 cp -a usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}/server/* $RPM_BUILD_ROOT%{oracle_home}
@@ -108,6 +113,8 @@ fi
 %attr(754,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/rc.d/init.d/oracle-xe
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/oracle-xe
 
+%{_mandir}/man1/*.1*
+
 %dir %{oracle_home}
 %{oracle_home}/dbs
 %{oracle_home}/demo
@@ -138,7 +145,7 @@ fi
 %{oracle_home}/ctx/admin
 %{oracle_home}/ctx/config
 %{oracle_home}/ctx/data
-%dir %{oracle_home}/ctx/bin/ctxhx
+%dir %{oracle_home}/ctx/bin
 %attr(755,root,root) %{oracle_home}/ctx/bin/ctxhx
 %dir %{oracle_home}/ctx/lib
 %{oracle_home}/ctx/lib/*.ini
@@ -167,7 +174,7 @@ fi
 
 %dir %{oracle_home}/lib
 %{oracle_home}/lib/*.a
-%{oracle_home}/lib/*.so*
+%attr(755,root,root) %{oracle_home}/lib/*.so*
 %{oracle_home}/lib/*.lis
 %{oracle_home}/lib/*.zip
 %{oracle_home}/lib/sysliblist
@@ -199,7 +206,32 @@ fi
 %dir %attr(750,oracle,dba) /var/log/oracle/rdbms
 %dir %attr(750,oracle,dba) /var/log/oracle/rdbms/log
 
+# TODO: mark only needed files/dirs oracle writable (or move back to /usr)
 %dir /var/lib/oracle
-# XXX Directories should be 750, but files 640.
-# XXX: list them here (i still don't have the tarball)
-%attr(750,oracle,dba) /var/lib/oracle/*
+%dir /var/lib/oracle/dbs
+/var/lib/oracle/dbs/*.ora
+/var/lib/oracle/network/admin/admin/samples
+/var/lib/oracle/network/admin/admin/*.ora
+
+# XXX: moved too much?
+%dir /var/lib/oracle/rdbms
+%dir /var/lib/oracle/rdbms/admin
+/var/lib/oracle/rdbms/admin/*.bsq
+/var/lib/oracle/rdbms/admin/*.def
+/var/lib/oracle/rdbms/admin/*.lst
+/var/lib/oracle/rdbms/admin/*.par
+/var/lib/oracle/rdbms/admin/*.plb
+/var/lib/oracle/rdbms/admin/*.sql
+/var/lib/oracle/rdbms/admin/*.txt
+/var/lib/oracle/rdbms/demo
+/var/lib/oracle/rdbms/install/config_filemap.sbs
+%dir /var/lib/oracle/rdbms/install
+%dir /var/lib/oracle/rdbms/install/rdbms
+/var/lib/oracle/rdbms/install/rdbms/*.sh
+/var/lib/oracle/rdbms/jlib
+/var/lib/oracle/rdbms/label.info
+/var/lib/oracle/rdbms/log
+/var/lib/oracle/rdbms/mesg
+%dir /var/lib/oracle/rdbms/public
+# XXX: -devel?
+/var/lib/oracle/rdbms/public/*.h
