@@ -62,13 +62,13 @@ install -d $(dirname $RPM_BUILD_ROOT%{2}/%{1}) \
 mv $RPM_BUILD_ROOT%{oracle_home}/%{1} $RPM_BUILD_ROOT%{2}/%{1} \
 ln -s %{2}/%{1} $RPM_BUILD_ROOT%{oracle_home}/%{1}
 
-%{mvln dbs /var/lib/oracle}
-#%%{mvln log /var/log/oracle}
-%{mvln rdbms/log /var/log/oracle}
-%{mvln network/log /var/log/oracle}
-%{mvln config/log /var/log/oracle/config}
-%{mvln rdbms /var/lib/oracle}
-%{mvln network/admin /var/lib/oracle}
+%mvln dbs /var/lib/oracle
+#%%mvln log /var/log/oracle
+%mvln rdbms/log /var/log/oracle
+%mvln network/log /var/log/oracle
+%mvln config/log /var/log/oracle/config
+%mvln rdbms /var/lib/oracle
+%mvln network/admin /var/lib/oracle
 ln -s /var/lib/oracle/admin $RPM_BUILD_ROOT%{_sysconfdir}/oracle-xe
 
 install -d $RPM_BUILD_ROOT%{_datadir}/oracle/scripts
@@ -109,5 +109,6 @@ fi
 %dir /var/lib/oracle
 %dir /var/log/oracle
 # XXX Directories should be 750, but files 640.
+# XXX: list them here (i still don't have the tarball)
 %attr(750,oracle,dba) /var/lib/oracle/*
 %attr(750,oracle,dba) /var/log/oracle/*
