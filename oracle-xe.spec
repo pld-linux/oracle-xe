@@ -1,6 +1,15 @@
 # TODO:
 # - read the license. Can we redistribute it?
 # - x11 .desktop files
+# - error: oracle-xe-10.2.0.1-0.1.i686: req libc.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libc.so.1(SYSVABI_1.3) not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libdl.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libgen.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libkstat.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libm.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libsched.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libsocket.so.1 not found
+#   error: oracle-xe-10.2.0.1-0.1.i686: req libthread.so.1 not found
 
 %define	oracle_rel	1.0
 %define	oracle_ver	10.2.0
@@ -115,6 +124,13 @@ fi
 
 %{_mandir}/man1/*.1*
 
+%dir /usr/lib/oracle
+%dir /usr/lib/oracle/xe
+%dir /usr/lib/oracle/xe/app
+%dir /usr/lib/oracle/xe/app/oracle
+%dir /usr/lib/oracle/xe/app/oracle/product
+%dir /usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}
+
 %dir %{oracle_home}
 %{oracle_home}/dbs
 %{oracle_home}/demo
@@ -129,6 +145,10 @@ fi
 %{oracle_home}/slax
 %{oracle_home}/sqlplus
 %{oracle_home}/xdk
+
+%dir %{oracle_home}/bin
+%dir %{oracle_home}/config
+%dir %{oracle_home}/config/scripts
 
 %attr(755,root,root) %{oracle_home}/bin/*
 
@@ -168,6 +188,7 @@ fi
 
 %dir %{oracle_home}/jdbc
 %dir %{oracle_home}/jdbc/bin
+%dir %{oracle_home}/jdbc/lib
 %attr(755,root,root) %{oracle_home}/jdbc/bin/fixJDBC-tm4ldaps.sh
 %{oracle_home}/jdbc/lib/*.jar
 %{oracle_home}/jdbc/Readme.txt
@@ -199,6 +220,7 @@ fi
 # TODO: -devel?
 #%{oracle_home}/plsql/include
 
+%dir %{_datadir}/oracle
 %attr(755,root,root) %{_datadir}/oracle/scripts
 %dir /var/log/oracle
 %dir %attr(750,oracle,dba) /var/log/oracle/network
@@ -210,6 +232,9 @@ fi
 %dir /var/lib/oracle
 %dir /var/lib/oracle/dbs
 /var/lib/oracle/dbs/*.ora
+%dir /var/lib/oracle/network
+%dir /var/lib/oracle/network/admin
+%dir /var/lib/oracle/network/admin/admin
 /var/lib/oracle/network/admin/admin/samples
 /var/lib/oracle/network/admin/admin/*.ora
 
