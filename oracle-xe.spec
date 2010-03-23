@@ -64,7 +64,8 @@ install oracle-xe.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/oracle-xe
 
 cp -a man/*.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
-install -d $RPM_BUILD_ROOT%{oracle_home}
+install -d $RPM_BUILD_ROOT%{oracle_home}/rdbms/audit
+
 cp -a usr/lib/oracle/xe/app/oracle/product/%{oracle_ver}/server/* $RPM_BUILD_ROOT%{oracle_home}
 
 mv $RPM_BUILD_ROOT%{oracle_home}/dbs/init{,XE}.ora
