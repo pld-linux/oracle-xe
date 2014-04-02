@@ -9,8 +9,6 @@
 # processname:	oracle-xe
 # config:	/etc/sysconfig/oracle-xe
 # pidfile:	/var/run/pid/oracle-xe
-#
-# $Id$
 
 # Source function library
 . /etc/rc.d/init.d/functions
@@ -42,40 +40,40 @@ else
 fi
 
 confkernel() {
-  eval $(awk '
-  function min(a, b) {return ((a < b)?a:b)}
-  function max(a, b) {return ((a > b)?a:b)}
-  
-  BEGIN {
-    getline < "/proc/sys/kernel/sem"
-    printf("semmsl=%i\n", max(250, $1));
-    printf("semmns=%i\n", max(32000, $2));
-    printf("semopm=%i\n", max(100, $3));
-    printf("semmni=%i\n", max(128, $4));
+	eval $(awk '
+	function min(a, b) {return ((a < b)?a:b)}
+	function max(a, b) {return ((a > b)?a:b)}
 
-    getline < "/proc/sys/kernel/shmmax"
-    printf("shmmax=%i\n", max(536870912, $1));
+	BEGIN {
+		getline < "/proc/sys/kernel/sem"
+		printf("semmsl=%i\n", max(250, $1));
+		printf("semmns=%i\n", max(32000, $2));
+		printf("semopm=%i\n", max(100, $3));
+		printf("semmni=%i\n", max(128, $4));
 
-    getline < "/proc/sys/kernel/shmmni"
-    printf("shmmni=%i\n", max(4096, $1));
+		getline < "/proc/sys/kernel/shmmax"
+		printf("shmmax=%i\n", max(536870912, $1));
 
-    getline < "/proc/sys/kernel/shmall"
-    printf("shmall=%i\n", max(2097152, $1));
-    
-    getline < "/proc/sys/fs/file-max"
-    printf("filemax=%i\n", max(65536, $1));
+		getline < "/proc/sys/kernel/shmmni"
+		printf("shmmni=%i\n", max(4096, $1));
 
-    getline < "/proc/sys/net/ipv4/ip_local_port_range"
-    printf("ip_local_port_range_lb=%i\n", max(1024, $1));
-    printf("ip_local_port_range_ub=%i\n", min(65000 $2));
-  }')
+		getline < "/proc/sys/kernel/shmall"
+		printf("shmall=%i\n", max(2097152, $1));
 
-  /sbin/sysctl -w kernel.sem="$semmsl $semmns $semopm $semmni"
-  /sbin/sysctl -w kernel.shmmax="$shmmax"
-  /sbin/sysctl -w kernel.shmmni="$shmmni"
-  /sbin/sysctl -w kernel.shmall="$shmall"
-  /sbin/sysctl -w fs.file-max="$filemax"
-  /sbin/sysctl -w net.ipv4.ip_local_port_range="$ip_local_port_range_lb $ip_local_port_range_ub"
+		getline < "/proc/sys/fs/file-max"
+		printf("filemax=%i\n", max(65536, $1));
+
+		getline < "/proc/sys/net/ipv4/ip_local_port_range"
+		printf("ip_local_port_range_lb=%i\n", max(1024, $1));
+		printf("ip_local_port_range_ub=%i\n", min(65000 $2));
+	}')
+
+	/sbin/sysctl -w kernel.sem="$semmsl $semmns $semopm $semmni"
+	/sbin/sysctl -w kernel.shmmax="$shmmax"
+	/sbin/sysctl -w kernel.shmmni="$shmmni"
+	/sbin/sysctl -w kernel.shmall="$shmall"
+	/sbin/sysctl -w fs.file-max="$filemax"
+	/sbin/sysctl -w net.ipv4.ip_local_port_range="$ip_local_port_range_lb $ip_local_port_range_ub"
 }
 
 start() {
@@ -109,6 +107,7 @@ stop() {
 	fi
 
 	# Stop daemons.
+	# FIXME: using 'daemon' to 'stop' will break when using start-stop-daemon!
 	msg_stopping 'oracle-xe database'
 	daemon --user oracle $ORACLE_HOME/bin/sqlplus -s /nolog @$ORACLE_HOME/config/scripts/stopdb.sql
 	msg_stopping 'oracle-xe listener'
@@ -141,22 +140,21 @@ checkstatus() {
 }
 
 initialize() {
-  $(/usr/share/oracle/scripts/sgapga.awk /proc/meminfo)
-  sed -i -e "s/%sga_target%/$sga/g" $ORACLE_HOME/config/scripts/init.ora
-  sed -i -e "s/%pga_aggregate_target%/$pga/g" $ORACLE_HOME/config/scripts/init.ora
-  sed -i -e "s/%sga_target%/$sga/g" $ORACLE_HOME/config/scripts/initXETemp.ora
-  sed -i -e "s/%pga_aggregate_target%/$pga/g" $ORACLE_HOME/config/scripts/initXETemp.ora
+	$(/usr/share/oracle/scripts/sgapga.awk /proc/meminfo)
+	sed -i -e "s/%sga_target%/$sga/g" $ORACLE_HOME/config/scripts/init.ora
+	sed -i -e "s/%pga_aggregate_target%/$pga/g" $ORACLE_HOME/config/scripts/init.ora
+	sed -i -e "s/%sga_target%/$sga/g" $ORACLE_HOME/config/scripts/initXETemp.ora
+	sed -i -e "s/%pga_aggregate_target%/$pga/g" $ORACLE_HOME/config/scripts/initXETemp.ora
 }
-
 
 RETVAL=0
 # See how we were called.
 case "$1" in
   start)
-  	start
+	start
 	;;
   stop)
-  	stop
+	stop
 	;;
   restart)
 	stop
@@ -169,7 +167,7 @@ case "$1" in
 	condrestart 7
 	;;
   init)
-  	initialize
+	initialize
 	;;
   status)
 	checkstatus
