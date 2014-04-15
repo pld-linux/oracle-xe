@@ -40,6 +40,9 @@ else
 fi
 
 confkernel() {
+	local conffile=/etc/sysctl.d/10-oracle-xe.conf
+
+	test -e $conffile || return
 	eval $(awk '
 	function min(a, b) {return ((a < b)?a:b)}
 	function max(a, b) {return ((a > b)?a:b)}
@@ -52,7 +55,7 @@ confkernel() {
 		printf("semmni=%i\n", max(128, $4));
 
 		getline < "/proc/sys/kernel/shmmax"
-		printf("shmmax=%i\n", max(536870912, $1));
+		printf("shmmax=%i\n", max(4294967295, $1));
 
 		getline < "/proc/sys/kernel/shmmni"
 		printf("shmmni=%i\n", max(4096, $1));
@@ -61,19 +64,23 @@ confkernel() {
 		printf("shmall=%i\n", max(2097152, $1));
 
 		getline < "/proc/sys/fs/file-max"
-		printf("filemax=%i\n", max(65536, $1));
+		printf("filemax=%i\n", max(6815744, $1));
 
 		getline < "/proc/sys/net/ipv4/ip_local_port_range"
-		printf("ip_local_port_range_lb=%i\n", max(1024, $1));
+		printf("ip_local_port_range_lb=%i\n", max(9000, $1));
 		printf("ip_local_port_range_ub=%i\n", min(65000 $2));
 	}')
 
-	/sbin/sysctl -w kernel.sem="$semmsl $semmns $semopm $semmni"
-	/sbin/sysctl -w kernel.shmmax="$shmmax"
-	/sbin/sysctl -w kernel.shmmni="$shmmni"
-	/sbin/sysctl -w kernel.shmall="$shmall"
-	/sbin/sysctl -w fs.file-max="$filemax"
-	/sbin/sysctl -w net.ipv4.ip_local_port_range="$ip_local_port_range_lb $ip_local_port_range_ub"
+	cat <<-EOF >> /etc/sysctl.d/10-oracle-xe.conf
+	kernel.sem = $semmsl $semmns $semopm $semmni
+	kernel.shmmax = $shmmax
+	kernel.shmmni = $shmmni
+	kernel.shmall = $shmall
+	fs.file-max = $filemax
+	net.ipv4.ip_local_port_range = $ip_local_port_range_lb $ip_local_port_range_ub
+	EOF
+
+	apply_sysctl
 }
 
 start() {
